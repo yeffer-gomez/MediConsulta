@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const c = require('../controllers/patient.controller');
+const { authenticate, authorize } = require('../middleware/auth.middleware');
+router.use(authenticate);
+router.get('/', c.getAll);
+router.get('/:id', c.getById);
+router.get('/:id/appointments', c.getAppointments);
+router.post('/', authorize('admin','receptionist'), c.create);
+router.put('/:id', authorize('admin','receptionist'), c.update);
+router.delete('/:id', authorize('admin'), c.remove);
+module.exports = router;

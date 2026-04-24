@@ -1,0 +1,10 @@
+const router = require('express').Router();
+const c = require('../controllers/professional.controller');
+const { authenticate, authorize } = require('../middleware/auth.middleware');
+router.use(authenticate);
+router.get('/', c.getAll);
+router.get('/:id', c.getById);
+router.get('/:id/available-slots', c.getAvailableSlots);
+router.post('/', authorize('admin'), c.create);
+router.put('/:id', authorize('admin'), c.update);
+module.exports = router;

@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: clinic_db
+    environment:
+      POSTGRES_USER: clinic_user
+      POSTGRES_PASSWORD: clinic_pass
+      POSTGRES_DB: clinic_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - clinic_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic_user -d clinic_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: clinic_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: clinic_user
+      DB_PASSWORD: clinic_pass
+      DB_NAME: clinic_db
+      JWT_SECRET: clinic_super_secret_jwt_key_2024
+      JWT_EXPIRES_IN: 24h
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - clinic_network
+    volumes:
+      - ./backend/src:/app/src
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: clinic_frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - clinic_network
+
+volumes:
+  postgres_data:
+
+networks:
+  clinic_network:
+    driver: bridge

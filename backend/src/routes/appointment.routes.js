@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const c = require('../controllers/appointment.controller');
+const { authenticate, authorize } = require('../middleware/auth.middleware');
+router.use(authenticate);
+router.get('/', c.getAll);
+router.get('/today', c.getToday);
+router.get('/:id', c.getById);
+router.post('/', authorize('admin','receptionist'), c.create);
+router.put('/:id', authorize('admin','receptionist'), c.update);
+router.patch('/:id/cancel', c.cancel);
+module.exports = router;
