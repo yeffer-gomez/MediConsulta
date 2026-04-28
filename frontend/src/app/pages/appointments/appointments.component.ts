@@ -267,10 +267,7 @@ export class AppointmentsComponent implements OnInit {
   selectedPatientName = () => this.selectedPatient ? `${this.selectedPatient.first_name} ${this.selectedPatient.last_name}` : '';
   canChangeStatus = (a: Appointment) => this.auth.hasRole('admin','receptionist','professional') && a.status !== 'cancelled';
 
-  filteredProfessionals = computed(() => {
-    if (!this.form.specialty_id) return this.professionals();
-    return this.professionals().filter(p => p.specialty_id === this.form.specialty_id);
-  });
+  filteredProfessionals = computed(() => this.professionals());
 
   constructor(
     private svc: AppointmentService, private patSvc: PatientService,
@@ -334,7 +331,22 @@ export class AppointmentsComponent implements OnInit {
   selectPatient(p: Patient) { this.selectedPatient = p; this.form.patient_id = p.id; this.patientSearch = `${p.first_name} ${p.last_name}`; this.patientResults.set([]); }
   clearPatient() { this.selectedPatient = null; this.form.patient_id = ''; this.patientSearch = ''; }
 
-  onSpecialtyChange() { this.form.professional_id = ''; this.form.scheduled_time = ''; this.slots.set([]); }
+  onSpecialtyChange() {
+  this.form.professional_id = '';
+  this.form.scheduled_time = '';
+  this.slots.set([]);
+
+  // 🔥 NUEVO: pedir al backend solo los profesionales de la especialidad
+  if (this.form.specialty_id) {
+    this.profSvc.getAll({ specialty_id: this.form.specialty_id })
+      .subscribe({
+        next: (pros) => this.professionals.set(pros),
+        error: () => this.professionals.set([])
+      });
+  } else {
+    this.professionals.set([]);
+  }
+}
   onProfessionalChange() { this.form.scheduled_time = ''; this.slots.set([]); if (this.form.scheduled_date) this.loadSlots(); }
 
   loadSlots() {
